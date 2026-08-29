@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 
 from src.data.preprocess import load_and_clean_data
 from src.features.build_features import build_features
-from scripts.run_pipeline import get_at_risk_customers
+from scripts.run_pipeline import get_at_risk_customers, get_sampled_risk_customers
 
 FEATURE_NAMES_MAP = {
     'monthly_logins': 'Monthly Logins',
@@ -29,13 +29,35 @@ FEATURE_NAMES_MAP = {
 }
 
 def format_feature_name(feat: str, val: float, is_increasing: bool) -> str:
-    """Format a clean, human-readable SHAP feature description."""
+    """Format a clean, human-readable SHAP feature description based on sensible business scales."""
     if feat == 'monthly_logins':
-        return f"{'Low' if val < 5 else 'High'} Monthly Logins ({val:.0f}/mo)"
+        if val < 5:
+            return f"Low Monthly Logins ({val:.0f}/mo)"
+        elif val <= 15:
+            return f"Moderate Monthly Logins ({val:.0f}/mo)"
+        else:
+            return f"High Monthly Logins ({val:.0f}/mo)"
     elif feat == 'csat_score':
-        return f"{'Low' if val <= 4 else 'High'} CSAT Score ({val:.0f}/10)"
+        if val <= 4:
+            return f"Low CSAT Score ({val:.0f}/10)"
+        elif val <= 7:
+            return f"Average CSAT Score ({val:.0f}/10)"
+        else:
+            return f"High CSAT Score ({val:.0f}/10)"
+    elif feat == 'nps_score':
+        if val <= 5:
+            return f"Low NPS Score ({val:.0f}/10)"
+        elif val <= 8:
+            return f"Average NPS Score ({val:.0f}/10)"
+        else:
+            return f"High NPS Score ({val:.0f}/10)"
     elif feat == 'tenure_months':
-        return f"{'Short' if val < 12 else 'Long'} Customer Tenure ({val:.0f} mos)"
+        if val < 12:
+            return f"Short Customer Tenure ({val:.0f} mos)"
+        elif val < 24:
+            return f"Moderate Customer Tenure ({val:.0f} mos)"
+        else:
+            return f"Long Customer Tenure ({val:.0f} mos)"
     elif feat == 'payment_failures':
         return f"Payment Failures ({val:.0f} failed)"
     elif feat == 'support_tickets':
@@ -44,8 +66,6 @@ def format_feature_name(feat: str, val: float, is_increasing: bool) -> str:
         return f"Support Escalations ({val:.0f} escalations)"
     elif feat == 'monthly_fee':
         return f"Monthly Fee (${val:.2f})"
-    elif feat == 'nps_score':
-        return f"NPS Score ({val:.0f}/10)"
     elif feat.startswith('contract_type_'):
         return f"Contract: {feat.replace('contract_type_', '').title()}"
     elif feat.startswith('complaint_type_'):
@@ -56,20 +76,96 @@ def format_feature_name(feat: str, val: float, is_increasing: bool) -> str:
         clean = FEATURE_NAMES_MAP.get(feat, feat.replace('_', ' ').title())
         return f"{clean} ({val})"
 
+from src.agent.risk_explainer import explain_risk
+from src.agent.retention_actions import recommend_actions
+
+def is_genuinely_positive_factor(feat: str, val: float) -> bool:
+    """Check if raw value of feature is genuinely positive/protective."""
+    if feat == 'csat_score' and val < 5:
+        return False
+    if feat == 'nps_score' and val < 6:
+        return False
+    if feat == 'monthly_logins' and val < 5:
+        return False
+    if feat == 'payment_failures' and val >= 1:
+        return False
+    if feat == 'escalations' and val >= 1:
+        return False
+    return True
+
+def generate_customer_text_snippets(raw_row: pd.Series, top_factors: list, risk_level: str) -> tuple:
+    """
+    Generates realistic support ticket excerpt and customer feedback snippet
+    consistent with customer's actual risk level and raw metrics.
+    """
+    csat = raw_row.get('csat_score', 7) if raw_row is not None and 'csat_score' in raw_row else 7
+    tickets = raw_row.get('support_tickets', 0) if raw_row is not None and 'support_tickets' in raw_row else 0
+    failures = raw_row.get('payment_failures', 0) if raw_row is not None and 'payment_failures' in raw_row else 0
+    logins = raw_row.get('monthly_logins', 10) if raw_row is not None and 'monthly_logins' in raw_row else 10
+    escalations = raw_row.get('escalations', 0) if raw_row is not None and 'escalations' in raw_row else 0
+    tenure = raw_row.get('tenure_months', 12) if raw_row is not None and 'tenure_months' in raw_row else 12
+    days_ago = raw_row.get('last_login_days_ago', 5) if raw_row is not None and 'last_login_days_ago' in raw_row else 5
+    
+    top_feat = top_factors[0]['feature'] if top_factors else ""
+
+    if risk_level == 'Low':
+        # Genuinely positive / neutral snippets for Low risk customers
+        if logins >= 20:
+            ticket = f"Feature Request #{8000 + int(tenure*3)}: Requested custom CSV report scheduling feature for team leads."
+            feedback = "Customer Review: 'Fantastic platform and super responsive support; our team relies on it daily!'"
+        elif csat >= 7:
+            ticket = f"General Question #{8100 + int(tenure*2)}: Inquired about setting up SSO authentication for new team members."
+            feedback = f"CSAT Survey ({int(csat)}/10): 'Seamless onboarding experience and immediate value delivered to our team.'"
+        else:
+            ticket = f"Account Inquiry #{8200 + int(tenure*2)}: Requested assistance adding 2 additional user seats for the upcoming quarter."
+            feedback = "Quarterly Review: 'Product is performing well and support team answered our questions promptly.'"
+
+    elif risk_level == 'Medium':
+        # Mixed / moderate snippets for Medium risk customers
+        if csat <= 4:
+            ticket = f"Support Ticket #{3100 + int(tenure*2)}: Inquired about optimization tips for dashboard load times during peak hours."
+            feedback = f"CSAT Survey ({int(csat)}/10): 'Core functionality is good, but would appreciate faster support turnaround on minor issues.'"
+        elif failures >= 1:
+            ticket = f"Billing Note #{1100 + int(tenure*3)}: Requested updated invoice copy after card update."
+            feedback = f"Feedback Note: 'Overall satisfied with the service, resolving billing detail update.'"
+        else:
+            ticket = f"General Inquiry #{7000 + int(tenure*2)}: User asked for clarification on monthly API call rate limits and tier caps."
+            feedback = f"Quarterly Feedback: 'Evaluating feature usage prior to upcoming contract renewal discussion.'"
+
+    else:
+        # Genuinely negative / urgent snippets for High risk customers
+        if failures >= 2 or top_feat == 'payment_failures':
+            ticket = f"Billing Escalation #{1000 + int(tenure*3)}: Recurring payment failed twice during renewal; user requested payment link update."
+            feedback = f"CSAT Survey ({int(csat)}/10): 'Payment failures causing account access blocks; urgent resolution required.'"
+        elif escalations >= 1 or top_feat == 'escalations':
+            ticket = f"Escalated Ticket #{2000 + int(tenure*2)}: Critical integration bug reopened twice; requested executive callback."
+            feedback = f"CSAT Survey ({int(csat)}/10): 'Unresolved bugs impacting daily operations; considering alternative solutions.'"
+        elif tickets >= 3 or top_feat == 'support_tickets':
+            ticket = f"Support Ticket #{3000 + int(tenure*4)}: Third ticket this month regarding reporting export failures and dashboard lag."
+            feedback = f"CSAT Survey ({int(csat)}/10): 'Frequent system downtime and slow ticket responses are severely impacting our team.'"
+        elif logins < 5 or days_ago > 20 or top_feat == 'monthly_logins':
+            ticket = f"Account Warning #{4000 + int(tenure*5)}: Admin requested seat reassignment guide after team inactivity warning."
+            feedback = f"Account Feedback: 'Team usage has dropped due to lack of training; evaluating subscription downsizing.'"
+        else:
+            ticket = f"Service Ticket #{5000 + int(tenure*2)}: Reported onboarding roadblock and requested cancellation terms."
+            feedback = f"CSAT Survey ({int(csat)}/10): 'Dissatisfied with platform adoption and support responsiveness.'"
+
+    return ticket, feedback
+
 def transform_profile_for_v2(profile: dict, raw_row: pd.Series = None) -> dict:
     """
-    Transform a raw pipeline risk profile into the v2 dashboard shape:
-    {
-      customer_id, churn_probability, risk_level,
-      metrics: [{label, value}, ...],
-      shap: {
-        increasing: [{feature, value}, ...],
-        decreasing: [{feature, value}, ...]
-      },
-      recommended_actions: [...]
-    }
+    Transform a raw pipeline risk profile into the v2 dashboard shape
+    including realistic support ticket and customer feedback snippets.
     """
     top_factors = profile.get("top_risk_factors", [])
+    risk_level = profile.get("risk_level", "Medium")
+    
+    ticket_excerpt, feedback_snippet = generate_customer_text_snippets(raw_row, top_factors, risk_level)
+    
+    # Pass snippets into profile and re-explain
+    profile["support_ticket_excerpt"] = ticket_excerpt
+    profile["feedback_snippet"] = feedback_snippet
+    explanation = explain_risk(profile)
     
     increasing = []
     decreasing = []
@@ -86,10 +182,11 @@ def transform_profile_for_v2(profile: dict, raw_row: pd.Series = None) -> dict:
             feat_desc = format_feature_name(feat, val, is_increasing=True)
             increasing.append({"feature": feat_desc, "value": abs_shap})
         else:
-            feat_desc = format_feature_name(feat, val, is_increasing=False)
-            decreasing.append({"feature": feat_desc, "value": abs_shap})
+            # Only include under "decreasing risk" if feature is genuinely positive/protective
+            if is_genuinely_positive_factor(feat, val):
+                feat_desc = format_feature_name(feat, val, is_increasing=False)
+                decreasing.append({"feature": feat_desc, "value": abs_shap})
             
-    # Build metrics array from raw customer row if available
     metrics = []
     if raw_row is not None:
         if "tenure_months" in raw_row:
@@ -109,21 +206,29 @@ def transform_profile_for_v2(profile: dict, raw_row: pd.Series = None) -> dict:
             clean_lbl = FEATURE_NAMES_MAP.get(feat, feat.replace("_", " ").title())
             metrics.append({"label": clean_lbl, "value": str(val)})
             
+    actions = recommend_actions(explanation, top_risk_factors=top_factors, risk_level=risk_level)
+    
     return {
         "customer_id": profile.get("customer_id", "N/A"),
         "churn_probability": round(profile.get("churn_probability", 0.0), 4),
-        "risk_level": profile.get("risk_level", "Medium"),
+        "risk_level": risk_level,
         "metrics": metrics,
+        "support_ticket_excerpt": ticket_excerpt,
+        "feedback_snippet": feedback_snippet,
+        "explanation": explanation,
         "shap": {
             "increasing": increasing,
             "decreasing": decreasing
         },
-        "recommended_actions": profile.get("recommended_actions", [])
+        "recommended_actions": actions
     }
 
-def generate_dashboard_data(output_path: str = 'data/processed/dashboard_data.json', top_n: int = 15):
+def generate_dashboard_data(output_path: str = 'data/processed/dashboard_data.json', n_high: int = 10, n_medium: int = 5, n_low: int = 3):
     """
-    Generates full customer risk profiles for top N at-risk test customers,
+    Generates customer risk profiles across a realistic risk mix:
+    - 10 High risk customers (prob >= 0.44)
+    - 5 Medium risk customers (0.20 <= prob < 0.44)
+    - 3 Low risk customers (prob < 0.20)
     reshapes them for v2 dashboard design, and saves to JSON.
     """
     raw_path = 'data/raw/business_churn.csv'
@@ -146,8 +251,14 @@ def generate_dashboard_data(output_path: str = 'data/processed/dashboard_data.js
         raw_test = None
         ids_test = None
         
-    print(f"Generating full risk profiles for top {top_n} at-risk customers...")
-    raw_profiles = get_at_risk_customers(X_test, customer_ids=ids_test, top_n=top_n)
+    print(f"Generating risk profiles for stratified mix: {n_high} High / {n_medium} Medium / {n_low} Low risk customers...")
+    raw_profiles = get_sampled_risk_customers(
+        X_test, 
+        customer_ids=ids_test, 
+        n_high=n_high, 
+        n_medium=n_medium, 
+        n_low=n_low
+    )
     
     v2_profiles = []
     for profile in raw_profiles:

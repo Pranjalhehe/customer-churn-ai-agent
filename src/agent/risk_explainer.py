@@ -8,13 +8,35 @@ load_dotenv()
 def translate_feature_name(feature: str, value: float, direction: str) -> str:
     """Translates raw model feature names and values into plain business language."""
     if feature == "tenure_months" or feature == "tenure":
-        return f"Customer tenure is short ({int(value)} month(s))" if value < 12 else f"Customer tenure is {int(value)} months"
+        if value < 12:
+            return f"Customer tenure is short ({int(value)} mos)"
+        elif value < 24:
+            return f"Customer tenure is moderate ({int(value)} mos)"
+        else:
+            return f"Customer tenure is long ({int(value)} mos)"
     elif feature == "csat_score":
-        return f"CSAT satisfaction score is low ({int(value)}/10)" if value < 6 else f"CSAT score is {int(value)}/10"
+        if value <= 4:
+            return f"CSAT satisfaction score is low ({int(value)}/10)"
+        elif value <= 7:
+            return f"CSAT satisfaction score is average ({int(value)}/10)"
+        else:
+            return f"CSAT satisfaction score is high ({int(value)}/10)"
+    elif feature == "nps_score":
+        if value <= 5:
+            return f"NPS score is low ({int(value)}/10)"
+        elif value <= 8:
+            return f"NPS score is average ({int(value)}/10)"
+        else:
+            return f"NPS score is high ({int(value)}/10)"
     elif feature == "payment_failures":
         return f"Experienced {int(value)} payment failure(s)"
     elif feature == "monthly_logins":
-        return f"Monthly logins are low ({int(value)} logins/month)" if value < 10 else f"Monthly logins count is {int(value)}"
+        if value < 5:
+            return f"Monthly logins are low ({int(value)} logins/month)"
+        elif value <= 15:
+            return f"Monthly logins are moderate ({int(value)} logins/month)"
+        else:
+            return f"Monthly logins are high ({int(value)} logins/month)"
     elif feature == "last_login_days_ago":
         return f"Last active {int(value)} day(s) ago"
     elif feature == "monthly_fee" or feature == "MonthlyCharges":
@@ -47,6 +69,8 @@ def build_explanation_prompt(shap_output: dict) -> str:
     """Constructs a strict, factor-specific prompt for the LLM."""
     churn_prob = shap_output.get("churn_probability", 0.0)
     top_factors = shap_output.get("top_risk_factors", [])
+    ticket_excerpt = shap_output.get("support_ticket_excerpt", "")
+    feedback_snippet = shap_output.get("feedback_snippet", "")
     
     translated_factors = [
         f"#{i+1}: {translate_feature_name(f['feature'], f['value'], f['direction'])} (SHAP Impact: {f['shap_value']:+.4f}, Direction: {f['direction']})"
@@ -61,15 +85,21 @@ A customer churn risk model evaluated a customer and found:
 - Predicted Churn Probability: {churn_prob:.1%}
 - Top Key Risk Factors (ordered strictly by importance/impact):
 {factors_str}
+- Support Ticket Excerpt: "{ticket_excerpt}"
+- Customer Feedback Snippet: "{feedback_snippet}"
 
 Write a short, 2-3 sentence, plain-English explanation of why this customer is at risk of churning.
 
 CRITICAL INSTRUCTIONS:
 1. Base your explanation SPECIFICALLY and PRIMARILY on the #1 top factor: "{primary_factor}".
-2. Explicitly mention the specific numbers given (e.g. specific monthly fee, CSAT score, or tenure).
-3. Do NOT use generic churn template language. Customize the emphasis completely based on the #1 risk factor above.
+2. Reference the customer's specific support ticket excerpt or feedback snippet directly (e.g., "Their recent ticket reported unresolved billing issues..." or "Customer survey feedback noted...").
+3. Do NOT use generic churn template language. Customize the emphasis completely based on the #1 risk factor and customer text above.
 4. Do NOT use data science jargon like "SHAP", "features", "variables", or "model weights".
-5. Write strictly for a Customer Success Representative."""
+5. Tailor the closing recommendation strictly to the customer's risk level:
+   - For High risk (churn prob >= 44%), include an urgent action recommendation (e.g. "Immediate CS outreach is recommended to mitigate churn risk.").
+   - For Medium risk (churn prob 20%-44%), suggest a proactive CSM check-in.
+   - For Low risk (churn prob < 20%), do NOT use urgent language or "immediate outreach" calls to action. Instead, state that the account is in healthy standing with routine monitoring.
+6. Write strictly for a Customer Success Representative."""
 
     return prompt
 
@@ -81,6 +111,8 @@ def explain_risk(shap_output: dict, api_key: str = None) -> str:
     key = api_key or os.getenv("POLLINATIONS_API_KEY")
     churn_prob = shap_output.get("churn_probability", 0.0)
     top_factors = shap_output.get("top_risk_factors", [])
+    ticket_excerpt = shap_output.get("support_ticket_excerpt", "")
+    feedback_snippet = shap_output.get("feedback_snippet", "")
     
     prompt = build_explanation_prompt(shap_output)
     
@@ -102,14 +134,37 @@ def explain_risk(shap_output: dict, api_key: str = None) -> str:
         except Exception as e:
             print(f"\n❌ [AGENT API ERROR] Pollinations API call failed: {e}! Falling back to dynamic factor-based explanation.", file=sys.stderr)
 
-    # Dynamic fallback based on customer's exact top SHAP factors
+    # Dynamic fallback tailored strictly by risk level
     if top_factors:
         f1_desc = translate_feature_name(top_factors[0]['feature'], top_factors[0]['value'], top_factors[0]['direction'])
-        f2_desc = translate_feature_name(top_factors[1]['feature'], top_factors[1]['value'], top_factors[1]['direction']) if len(top_factors) > 1 else ""
-        return (
-            f"This customer faces a high churn probability of {churn_prob:.1%}, driven primarily because {f1_desc.lower()}. "
-            f"{'Additionally, ' + f2_desc.lower() + '.' if f2_desc else ''} "
-            f"Immediate outreach is recommended to mitigate risk."
-        )
+        
+        if churn_prob >= 0.44:
+            explanation = f"This customer faces a high churn risk of {churn_prob:.1%}, driven primarily because {f1_desc.lower()}."
+            if ticket_excerpt:
+                explanation += f" Their latest ticket notes: '{ticket_excerpt}'"
+            elif feedback_snippet:
+                explanation += f" Recent feedback highlighted: '{feedback_snippet}'"
+            explanation += " Immediate CS outreach is recommended to mitigate churn risk."
+        elif churn_prob >= 0.20:
+            explanation = f"This customer shows moderate churn risk at {churn_prob:.1%}, influenced by {f1_desc.lower()}."
+            if ticket_excerpt:
+                explanation += f" Recent ticket activity notes: '{ticket_excerpt}'"
+            elif feedback_snippet:
+                explanation += f" Customer feedback mentioned: '{feedback_snippet}'"
+            explanation += " Proactive CSM check-in is recommended prior to renewal."
+        else:
+            explanation = f"This customer maintains a low churn risk of {churn_prob:.1%}. Account activity remains healthy"
+            if feedback_snippet:
+                explanation += f", with recent feedback noting: '{feedback_snippet}'"
+            elif ticket_excerpt:
+                explanation += f", and ticket logs showing: '{ticket_excerpt}'"
+            explanation += "."
+            
+        return explanation
     
-    return f"This customer is at {churn_prob:.1%} risk of churning. Proactive account review is recommended."
+    if churn_prob >= 0.44:
+        return f"This customer is at high risk ({churn_prob:.1%}). Immediate CS outreach is recommended."
+    elif churn_prob >= 0.20:
+        return f"This customer is at moderate risk ({churn_prob:.1%}). Proactive CSM check-in recommended."
+    else:
+        return f"This customer maintains a low churn risk of {churn_prob:.1%} with stable account health."

@@ -50,7 +50,7 @@ def get_customer_risk_profile(customer_row: pd.DataFrame, customer_id: Optional[
     
     top_factors = shap_output.get("top_risk_factors", [])
     explanation = explain_risk(shap_output)
-    actions = recommend_actions(explanation, top_risk_factors=top_factors)
+    actions = recommend_actions(explanation, top_risk_factors=top_factors, risk_level=risk_lvl)
     
     return {
         "customer_id": customer_id if customer_id is not None else "N/A",
@@ -76,6 +76,42 @@ def get_at_risk_customers(X_data: pd.DataFrame, customer_ids: Optional[pd.Series
     
     results = []
     for idx in sorted_indices:
+        row = X_data.iloc[[idx]]
+        c_id = str(customer_ids.iloc[idx]) if customer_ids is not None else f"Cust_{idx}"
+        profile = get_customer_risk_profile(row, customer_id=c_id, explainer=explainer)
+        results.append(profile)
+        
+    return results
+
+def get_sampled_risk_customers(
+    X_data: pd.DataFrame, 
+    customer_ids: Optional[pd.Series] = None, 
+    n_high: int = 10,
+    n_medium: int = 5,
+    n_low: int = 3,
+    model_path: str = 'models/churn_model.pkl'
+) -> List[Dict[str, Any]]:
+    """
+    Selects a stratified mixture of customer profiles across risk tiers:
+    - n_high: Top High risk customers (prob >= 0.44)
+    - n_medium: Medium risk customers (0.20 <= prob < 0.44)
+    - n_low: Low risk customers (prob < 0.20)
+    """
+    explainer = ChurnExplainer(model_path)
+    probs = explainer.model.predict_proba(X_data)[:, 1]
+    
+    high_indices = np.where(probs >= DECISION_THRESHOLD)[0]
+    med_indices = np.where((probs >= 0.20) & (probs < DECISION_THRESHOLD))[0]
+    low_indices = np.where(probs < 0.20)[0]
+    
+    high_sorted = high_indices[np.argsort(-probs[high_indices])][:n_high]
+    med_sorted = med_indices[np.argsort(-probs[med_indices])][:n_medium]
+    low_sorted = low_indices[np.argsort(-probs[low_indices])][:n_low]
+    
+    selected_indices = np.concatenate([high_sorted, med_sorted, low_sorted])
+    
+    results = []
+    for idx in selected_indices:
         row = X_data.iloc[[idx]]
         c_id = str(customer_ids.iloc[idx]) if customer_ids is not None else f"Cust_{idx}"
         profile = get_customer_risk_profile(row, customer_id=c_id, explainer=explainer)
