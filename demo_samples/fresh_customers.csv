@@ -1,0 +1,21 @@
+customer_id,gender,age,country,city,customer_segment,tenure_months,signup_channel,contract_type,monthly_logins,weekly_active_days,avg_session_time,features_used,usage_growth_rate,last_login_days_ago,monthly_fee,total_revenue,payment_method,payment_failures,discount_applied,price_increase_last_3m,support_tickets,avg_resolution_time,complaint_type,csat_score,escalations,email_open_rate,marketing_click_rate,nps_score,survey_response,referral_count,churn
+DEMO_00001,Female,33,UK,London,Individual,11,Web,Monthly,29,0,16.464104391836756,4,0.03,6,30,330,PayPal,2,No,No,1,12.914753126332574,Technical,2.0,1,0.48,0.43,-44,Satisfied,0,1
+DEMO_00002,Female,49,Canada,Berlin,Enterprise,18,Web,Monthly,3,3,7.227989693188825,9,0.14,3,30,540,Bank Transfer,1,No,No,3,10.913528510197915,Service,2.0,0,0.62,0.47,48,Unsatisfied,2,1
+DEMO_00003,Female,73,Australia,Toronto,SME,24,Web,Quarterly,0,2,22.225508404192343,4,-0.06,5,70,1680,PayPal,0,Yes,Yes,4,23.378715589741446,Technical,2.0,0,0.66,0.1,71,Neutral,2,0
+DEMO_00004,Female,73,Bangladesh,Toronto,SME,35,Mobile,Monthly,24,6,20.97958636934956,5,0.08,19,70,2450,Card,2,Yes,No,1,8.552037241564031,Service,3.0,0,0.64,0.37,61,Neutral,1,0
+DEMO_00005,Male,74,India,Berlin,Individual,2,Web,Monthly,12,6,12.95205657248997,2,0.07,4,10,20,PayPal,1,No,No,1,5.79576223761201,Billing,2.0,0,0.27,0.15,11,Satisfied,2,1
+DEMO_00006,Female,61,India,New York,SME,28,Mobile,Yearly,0,3,9.771625294283394,6,-0.02,19,70,1960,Bank Transfer,0,No,No,1,24.98922532909387,Technical,3.0,1,0.41,0.33,65,Satisfied,1,0
+DEMO_00007,Male,33,USA,Sydney,Individual,31,Mobile,Monthly,26,4,24.303180981354203,5,0.1,1,70,2170,Card,1,No,No,0,14.349398802393438,Service,2.0,0,0.33,0.34,-33,Satisfied,1,0
+DEMO_00008,Male,29,Bangladesh,Toronto,Individual,2,Mobile,Monthly,13,3,4.372094980607216,3,-0.11,0,10,20,Card,0,No,Yes,0,31.308426648123763,Billing,4.0,0,0.76,0.4,14,Satisfied,0,0
+DEMO_00009,Female,49,UK,London,Individual,50,Mobile,Quarterly,11,3,18.74068190774296,5,-0.22,1,10,500,Card,1,No,No,1,17.627142110032402,Technical,4.0,0,0.66,0.2,23,Neutral,1,0
+DEMO_00010,Female,19,India,London,SME,27,Web,Monthly,0,4,2.231152170323819,8,-0.02,1,10,270,Card,1,No,No,0,25.936876568538025,Service,4.0,0,0.48,0.17,-20,Satisfied,1,0
+DEMO_00011,Male,67,Germany,Berlin,Individual,29,Referral,Monthly,32,2,19.572238684936814,10,0.38,11,10,290,Card,2,No,No,2,19.30081415859297,Billing,4.0,1,0.22,0.22,-22,Satisfied,0,0
+DEMO_00012,Male,34,Canada,Delhi,Individual,36,Web,Quarterly,20,6,25.098767724258124,1,0.02,2,50,1800,Card,0,No,No,0,32.477371086212884,Technical,2.0,0,0.49,0.38,4,Neutral,0,0
+DEMO_00013,Male,65,Germany,London,SME,53,Web,Quarterly,23,3,25.66754905218324,5,-0.07,9,50,2650,Card,0,No,Yes,0,18.929334126635897,Service,5.0,0,0.58,0.02,-13,Neutral,1,0
+DEMO_00014,Male,20,Australia,New York,SME,22,Web,Monthly,41,7,10.817506467005176,4,-0.03,5,30,660,Card,0,Yes,No,2,29.781452300374408,,3.0,0,0.67,0.07,43,Satisfied,0,0
+DEMO_00015,Male,21,India,Berlin,Individual,59,Mobile,Quarterly,8,0,17.52819363843894,3,0.07,26,100,5900,Card,0,Yes,No,1,13.306856653264548,,4.0,0,0.3,0.04,84,Neutral,2,0
+DEMO_00016,Female,43,UK,Berlin,SME,15,Mobile,Yearly,30,7,12.941002882551404,3,0.19,2,10,150,Card,1,No,No,2,37.04455549397611,Billing,4.0,0,0.5,0.32,15,Neutral,1,0
+DEMO_00017,Male,25,Australia,Toronto,SME,15,Mobile,Yearly,19,6,26.041488810915645,2,-0.02,3,30,450,Card,0,No,No,2,2.421526083562547,Technical,4.0,1,0.84,0.08,-8,Neutral,2,0
+DEMO_00018,Male,34,UK,Dhaka,SME,30,Web,Quarterly,18,0,17.85852768042663,4,0.0,10,30,900,PayPal,1,Yes,No,2,17.868045522452128,,5.0,1,0.69,0.44,34,Neutral,0,1
+DEMO_00019,Female,57,Bangladesh,Sydney,Individual,51,Web,Monthly,23,1,18.105172196542625,8,-0.09,5,50,2550,Bank Transfer,1,Yes,Yes,1,26.081602577580323,Technical,3.0,2,0.17,0.08,-49,Neutral,2,0
+DEMO_00020,Female,18,India,Sydney,Individual,38,Mobile,Quarterly,20,2,15.50540727017496,4,0.09,34,70,2660,Card,1,Yes,No,1,30.499173197833077,Billing,4.0,0,0.24,0.47,85,Satisfied,2,0
