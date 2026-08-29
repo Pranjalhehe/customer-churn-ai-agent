@@ -6,5 +6,6 @@ imbalanced-learn
 shap
 streamlit
 anthropic
+openai
 python-dotenv
 pytest

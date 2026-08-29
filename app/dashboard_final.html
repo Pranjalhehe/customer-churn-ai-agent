@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RetainIQ — Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --page-bg:#F3F5FA;
+    --surface:#FFFFFF;
+    --surface-2:#EEF1F7;
+    --surface-3:#E6E9F2;
+    --border:#DDE2EC;
+    --border-soft:#E6E9F2;
+    --text:#172033;
+    --muted:#667085;
+    --muted-2:#98A2B3;
+    --accent:#4F46E5;
+    --accent-soft:#EEF0FF;
+    --accent-soft-2:#E2E1FD;
+    --accent-glow:rgba(79,70,229,.16);
+
+    --high:#C0362C;
+    --high-soft:#FBE9E8;
+    --high-bg:#FDF3F2;
+    --high-border:#F3CFCB;
+
+    --medium:#B5680A;
+    --medium-soft:#FBF0DC;
+    --medium-bg:#FDF7EB;
+    --medium-border:#F0DBA9;
+
+    --low:#15803D;
+    --low-soft:#E1F3E7;
+    --low-bg:#F1FAF4;
+    --low-border:#C6E7D1;
+
+    --shadow-sm:0 1px 2px rgba(23,32,51,.04), 0 1px 1px rgba(23,32,51,.03);
+    --shadow-md:0 8px 20px rgba(23,32,51,.07), 0 2px 6px rgba(23,32,51,.04);
+    --shadow-lg:0 20px 40px rgba(23,32,51,.12), 0 6px 12px rgba(23,32,51,.05);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--page-bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+  }
+
+  body::before{
+    content:'';
+    position:fixed;
+    top:-200px; left:50%;
+    transform:translateX(-50%);
+    width:1100px; height:560px;
+    background:radial-gradient(closest-side, rgba(79,70,229,.10), rgba(79,70,229,0) 72%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .mono{font-family:'JetBrains Mono', monospace;}
+  a, button, select{font-family:inherit; color:inherit;}
+  ::selection{background:var(--accent-glow); color:var(--text);}
+
+  :focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+    border-radius:6px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+
+  /* ---------- App header / nav ---------- */
+  .appbar{
+    position:relative;
+    z-index:2;
+    background:rgba(250,251,254,.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+  }
+  .appbar-inner{
+    max-width:1320px;
+    margin:0 auto;
+    padding:0 32px;
+    height:60px;
+    display:flex;
+    align-items:center;
+    gap:28px;
+  }
+
+  .brand{display:flex; align-items:center; gap:9px; flex-shrink:0;}
+  .brand-mark{
+    width:28px; height:28px; border-radius:8px;
+    background:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    box-shadow:0 2px 6px rgba(79,70,229,.35);
+  }
+  .brand-mark svg{color:#fff;}
+  .brand-name{font-size:15.5px; font-weight:700; letter-spacing:-0.01em; color:var(--text);}
+
+  .nav-links{display:flex; align-items:center; gap:4px; flex:1;}
+  .nav-links a{
+    font-size:13.5px; font-weight:500; color:var(--muted);
+    padding:7px 12px; border-radius:8px;
+    text-decoration:none;
+    transition:background .15s ease, color .15s ease;
+  }
+  .nav-links a:hover{background:var(--surface-2); color:var(--text);}
+  .nav-links a.active{background:var(--accent-soft); color:var(--accent); font-weight:600;}
+
+  .appbar-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+  .icon-btn{
+    width:34px; height:34px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent; border:none; cursor:pointer;
+    color:var(--muted);
+    transition:background .15s ease, color .15s ease;
+  }
+  .icon-btn:hover{background:var(--surface-2); color:var(--text);}
+  .avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:var(--surface-3);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--muted); margin-left:6px;
+    border:1px solid var(--border-soft);
+  }
+
+  @media (max-width:860px){
+    .nav-links{display:none;}
+  }
+
+  /* ---------- Shell ---------- */
+  .shell{
+    position:relative; z-index:1;
+    max-width:1320px;
+    margin:0 auto;
+    padding:28px 32px 72px;
+  }
+
+  .page-head{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; margin-bottom:22px; flex-wrap:wrap;
+  }
+  .page-head h1{font-size:25px; font-weight:700; letter-spacing:-0.01em; color:var(--text);}
+  .status-pill{
+    display:flex; align-items:center; gap:7px;
+    font-size:12.5px; font-weight:500; color:var(--muted);
+    margin-top:4px;
+  }
+  .status-dot{width:7px; height:7px; border-radius:50%; background:var(--low); position:relative; flex-shrink:0;}
+  .status-dot::after{
+    content:''; position:absolute; inset:-4px; border-radius:50%;
+    background:var(--low); opacity:.35; animation:pulse 2.2s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{transform:scale(.6); opacity:.5;}
+    70%{transform:scale(1.9); opacity:0;}
+    100%{transform:scale(1.9); opacity:0;}
+  }
+
+  .search-box{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:0 12px;
+    font-size:13px;
+    color:var(--text);
+    display:flex; align-items:center; gap:8px;
+    min-width:240px; height:38px;
+    box-shadow:var(--shadow-sm);
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .search-box svg{flex-shrink:0; color:var(--muted-2);}
+  .search-box:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow);}
+  .search-box:focus-within svg{color:var(--accent);}
+  .search-box input{background:none; border:none; outline:none; color:var(--text); font-size:13px; width:100%; font-family:inherit;}
+  .search-box input::placeholder{color:var(--muted-2);}
+
+  /* ---------- Stat cards ---------- */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+    margin-bottom:16px;
+  }
+  .stat-card{
+    background:var(--surface);
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    padding:16px 18px;
+    box-shadow:var(--shadow-sm);
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .stat-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-md); border-color:var(--border);}
+  .stat-card .label{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:12.5px; font-weight:500; color:var(--muted);
+    margin-bottom:10px;
+  }
+  .stat-card .label .dot{width:7px; height:7px; border-radius:50%; background:var(--dot-color, var(--accent)); flex-shrink:0;}
+  .stat-card .value{font-size:30px; font-weight:700; letter-spacing:-0.01em; line-height:1; color:var(--text);}
+
+  /* ---------- Row: distribution + insight ---------- */
+  .top-row{
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:16px;
+    margin-bottom:24px;
+    align-items:stretch;
+  }
+  @media (max-width:900px){ .top-row{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border-soft);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:var(--shadow-sm);
+  }
+  .panel-head{
+    padding:15px 20px;
+    border-bottom:1px solid var(--border-soft);
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px; flex-wrap:wrap;
+  }
+  .panel-head h2{font-size:14.5px; font-weight:700; color:var(--text);}
+  .panel-head .count{font-size:12px; color:var(--muted-2); font-family:'JetBrains Mono',monospace;}
+  .panel-head-controls{display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
+
+  .distribution-body{padding:18px 20px 20px;}
+  .dist-stack{
+    display:flex; width:100%; height:9px; border-radius:999px; overflow:hidden;
+    background:var(--surface-2); margin-bottom:16px;
+  }
+  .dist-stack .seg{height:100%; transition:width .5s ease;}
+  .dist-rows{display:flex; flex-direction:column; gap:11px;}
+  .dist-row{display:flex; align-items:center; gap:12px;}
+  .dist-row .dist-label{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; color:var(--text); width:86px; flex-shrink:0;}
+  .dist-row .dot{width:7px; height:7px; border-radius:50%; flex-shrink:0;}
+  .dist-row .dist-bar{flex:1; height:7px; border-radius:999px; background:var(--surface-2); overflow:hidden;}
+  .dist-row .dist-bar i{display:block; height:100%; border-radius:999px; transition:width .5s ease;}
+  .dist-row .dist-count{font-size:12px; color:var(--muted); font-family:'JetBrains Mono',monospace; width:36px; text-align:right; flex-shrink:0;}
+
+  .insight-card{
+    display:flex; flex-direction:column;
+    padding:18px 20px 20px;
+    justify-content:center;
+    height:100%;
+  }
+  .insight-card .insight-icon{
+    width:34px; height:34px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--high-soft); color:var(--high);
+    margin-bottom:12px;
+  }
+  .insight-card.calm .insight-icon{background:var(--low-soft); color:var(--low);}
+  .insight-card .insight-title{font-size:13.5px; font-weight:600; color:var(--muted); margin-bottom:5px;}
+  .insight-card .insight-value{font-size:17px; font-weight:700; color:var(--text); line-height:1.35; margin-bottom:12px;}
+  .insight-link{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:12.5px; font-weight:600; color:var(--accent);
+    background:none; border:none; cursor:pointer; padding:0; width:fit-content;
+  }
+  .insight-link:hover{text-decoration:underline;}
+
+  /* ---------- Layout: table + detail ---------- */
+  .workspace{
+    display:grid;
+    grid-template-columns:1fr 380px;
+    gap:16px;
+    align-items:flex-start;
+  }
+  @media (max-width:980px){
+    .workspace{grid-template-columns:1fr;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:560px){
+    .stats{grid-template-columns:1fr;}
+    .shell{padding:22px 16px 56px;}
+    .appbar-inner{padding:0 16px;}
+  }
+
+  .filter-chips{display:flex; gap:5px; flex-wrap:wrap;}
+  .chip{
+    padding:6px 12px; border-radius:999px; font-size:12px; font-weight:600;
+    background:var(--surface-2); border:1px solid transparent; color:var(--muted);
+    cursor:pointer; transition:all .15s ease;
+  }
+  .chip:hover{background:var(--surface-3); color:var(--text);}
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .chip.active.high{background:var(--high); border-color:var(--high);}
+  .chip.active.medium{background:var(--medium); border-color:var(--medium);}
+  .chip.active.low{background:var(--low); border-color:var(--low);}
+
+  .sort-select{
+    appearance:none;
+    background:var(--surface-2) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23667085" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>') no-repeat right 9px center;
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    padding:6px 28px 6px 11px;
+    font-size:12px; font-weight:600; color:var(--text);
+    cursor:pointer;
+  }
+  .sort-select:hover{border-color:var(--border);}
+
+  .table-inline-search{
+    display:flex; align-items:center; gap:7px;
+    background:var(--surface-2); border:1px solid var(--border-soft);
+    border-radius:8px; padding:0 10px; height:32px; min-width:170px;
+  }
+  .table-inline-search svg{color:var(--muted-2); flex-shrink:0;}
+  .table-inline-search input{background:none; border:none; outline:none; font-size:12.5px; width:100%; color:var(--text); font-family:inherit;}
+  .table-inline-search input::placeholder{color:var(--muted-2);}
+
+  .table-wrap{max-height:620px; overflow-y:auto; overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; min-width:480px;}
+  thead th{
+    position:sticky; top:0; background:var(--surface);
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--muted-2); font-weight:600; padding:11px 20px;
+    border-bottom:1px solid var(--border-soft); z-index:1;
+  }
+  tbody tr{cursor:pointer; border-bottom:1px solid var(--border-soft); transition:background .12s ease;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+  tbody tr:focus-visible{background:var(--surface-2);}
+  tbody tr.active{background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent);}
+  tbody td{padding:14px 20px; font-size:13.5px; vertical-align:middle;}
+  .cust-id{font-family:'JetBrains Mono', monospace; font-weight:600; letter-spacing:-.01em; color:var(--text);}
+
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px 4px 8px; border-radius:999px;
+    font-size:11px; font-weight:700; letter-spacing:.02em; width:fit-content;
+  }
+  .pill .dot{width:6px; height:6px; border-radius:50%;}
+  .pill.high{background:var(--high-bg); color:var(--high); border:1px solid var(--high-border);}
+  .pill.high .dot{background:var(--high);}
+  .pill.medium{background:var(--medium-bg); color:var(--medium); border:1px solid var(--medium-border);}
+  .pill.medium .dot{background:var(--medium);}
+  .pill.low{background:var(--low-bg); color:var(--low); border:1px solid var(--low-border);}
+  .pill.low .dot{background:var(--low);}
+
+  .prob-cell{display:flex; align-items:center; gap:10px;}
+  .prob-cell .prob-num{font-family:'JetBrains Mono', monospace; font-weight:700; font-size:13.5px; width:38px; flex-shrink:0;}
+  .prob-cell .prob-bar{flex:1; max-width:110px; height:6px; border-radius:3px; background:var(--surface-2); overflow:hidden;}
+  .prob-cell .prob-bar i{display:block; height:100%; border-radius:3px; transition:width .4s ease;}
+
+  .empty-row td{padding:0;}
+  .empty-state{padding:52px 24px; text-align:center;}
+  .empty-state svg{color:var(--muted-2); opacity:.55; margin-bottom:12px;}
+  .empty-state h3{font-size:14px; font-weight:700; color:var(--text); margin-bottom:5px;}
+  .empty-state p{font-size:12.5px; color:var(--muted); line-height:1.5; max-width:260px; margin:0 auto;}
+
+  /* ---------- Detail panel ---------- */
+  .detail-sticky{position:sticky; top:76px;}
+  .detail-empty{padding:60px 26px; text-align:center;}
+  .detail-empty svg{margin-bottom:14px; opacity:.5; color:var(--muted-2);}
+  .detail-empty h3{font-size:14px; font-weight:700; color:var(--text); margin-bottom:6px;}
+  .detail-empty p{font-size:12.5px; color:var(--muted); line-height:1.5; max-width:230px; margin:0 auto;}
+
+  .detail-body{padding:20px 20px 24px;}
+  .detail-id-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .detail-id-row .cust-id{font-size:13.5px;}
+
+  .gauge-wrap{display:flex; flex-direction:column; align-items:center; padding:8px 0 18px; margin-bottom:6px;}
+  .gauge{width:156px; height:156px; border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative;}
+  .gauge::before{content:''; position:absolute; inset:13px; border-radius:50%; background:var(--surface);}
+  .gauge-inner{position:relative; z-index:1; text-align:center;}
+  .gauge-inner .pct{font-size:34px; font-weight:700; line-height:1; letter-spacing:-.01em;}
+  .gauge-inner .pct-label{font-size:11px; color:var(--muted); margin-top:6px;}
+  .risk-tag-lg{margin-top:14px;}
+
+  .section-label{
+    font-size:12.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+    margin:20px 0 11px;
+  }
+  .section-label:first-of-type{margin-top:2px;}
+
+  .metrics-grid{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:6px;}
+  .metric-chip{background:var(--surface-2); border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; transition:border-color .15s ease;}
+  .metric-chip:hover{border-color:var(--border);}
+  .metric-chip .m-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted-2); margin-bottom:4px;}
+  .metric-chip .m-value{font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:600; color:var(--text);}
+
+  .lead-line{
+    display:flex; align-items:flex-start; gap:9px;
+    font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:14px;
+  }
+  .lead-line .lead-dot{width:6px; height:6px; border-radius:50%; margin-top:6px; flex-shrink:0; background:var(--lead-color, var(--accent));}
+  .lead-line strong{color:var(--text); font-weight:600;}
+
+  .shap-group{margin-bottom:15px;}
+  .shap-group:last-child{margin-bottom:0;}
+  .shap-group-label{font-size:11.5px; font-weight:700; margin-bottom:8px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.04em;}
+  .shap-row{display:flex; flex-direction:column; gap:5px; margin-bottom:8px;}
+  .shap-row:last-child{margin-bottom:0;}
+  .shap-feature{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text); line-height:1.4;}
+  .shap-feature::before{content:'•'; color:var(--muted-2); flex-shrink:0;}
+  .shap-mini-bar{width:100%; height:5px; border-radius:3px; background:var(--surface-2); overflow:hidden; margin-left:14px;}
+  .shap-mini-bar i{display:block; height:100%; border-radius:3px; transition:width .5s ease; width:calc(100% - 14px);}
+  .shap-none{font-size:12px; color:var(--muted-2);}
+
+  .actions-list{display:flex; flex-direction:column; gap:8px;}
+  .action-item{
+    display:flex; align-items:flex-start; gap:12px;
+    padding:12px 14px; background:var(--surface-2); border:1px solid var(--border-soft);
+    border-left:2px solid transparent;
+    border-radius:11px; cursor:pointer;
+    transition:border-color .15s ease, background .15s ease, opacity .15s ease, transform .1s ease;
+  }
+  .action-item.primary{border-left-color:var(--accent);}
+  .action-item:hover{border-color:var(--accent); transform:translateY(-1px);}
+  .action-item:focus-visible{border-color:var(--accent);}
+  .action-item.done{opacity:.5; background:var(--surface);}
+  .action-item.done .action-text{text-decoration:line-through; text-decoration-color:var(--muted-2);}
+  .action-num{
+    width:24px; height:24px; border-radius:7px; background:#fff; border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--muted);
+    flex-shrink:0; margin-top:1px; transition:all .15s ease;
+  }
+  .action-item.done .action-num{background:var(--low); border-color:var(--low); color:#fff;}
+  .action-num svg{display:none;}
+  .action-item.done .action-num svg{display:block;}
+  .action-item.done .action-num span{display:none;}
+  .action-text{font-size:12.5px; line-height:1.5; color:var(--text);}
+
+  footer.hint{margin-top:22px; text-align:center; font-size:12px; color:var(--muted-2);}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div class="appbar-inner">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 15a8 8 0 1 1 3 6.2"/>
+          <path d="M4 21v-6h6"/>
+        </svg>
+      </span>
+      <span class="brand-name">RetainIQ</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#" class="active">Overview</a>
+      <a href="#customers-panel">Customers</a>
+      <a href="#insights-row">Insights</a>
+      <a href="#customers-panel">Actions</a>
+    </nav>
+    <div class="appbar-actions">
+      <button type="button" class="icon-btn" id="nav-search-btn" aria-label="Search customers">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <button type="button" class="icon-btn" aria-label="Notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <span class="avatar" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <div class="page-head">
+    <div>
+      <h1>Overview</h1>
+      <div class="status-pill"><span class="status-dot"></span>Monitoring active</div>
+    </div>
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="search-input" placeholder="Search customer ID…" aria-label="Search customer ID" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="top-row" id="insights-row">
+    <div class="panel">
+      <div class="panel-head"><h2>Risk Distribution</h2></div>
+      <div class="distribution-body" id="distribution"></div>
+    </div>
+    <div class="panel" id="insight-banner"></div>
+  </div>
+
+  <div class="workspace" id="customers-panel">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Customers</h2>
+        <div class="panel-head-controls">
+          <div class="filter-chips" id="filter-chips"></div>
+          <select class="sort-select" id="sort-select" aria-label="Sort customers by">
+            <option value="highest">Highest risk</option>
+            <option value="lowest">Lowest risk</option>
+            <option value="id">Customer ID</option>
+          </select>
+          <div class="table-inline-search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="table-search-input" placeholder="Filter…" aria-label="Filter customer list">
+          </div>
+          <span class="count" id="rowcount"></span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Risk</th>
+              <th>Likelihood of Leaving</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel detail-sticky">
+      <div class="panel-head"><h2>Customer Detail</h2></div>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---- Injected Real Customer Data from Python Pipeline ----
+const customers = [
+  {
+    "customer_id": "CUST_02013",
+    "churn_probability": 0.9285,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "47 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "2 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$50.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Low Monthly Logins (2/mo)",
+          "value": 1.828
+        },
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 1.137
+        },
+        {
+          "feature": "Marketing Click Rate (0.26)",
+          "value": 0.2014
+        }
+      ],
+      "decreasing": []
+    },
+    "recommended_actions": [
+      "Schedule a 1-on-1 Product Onboarding & Activation session to help the user rebuild regular login habits (currently 2 logins/month).",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10)."
+    ]
+  },
+  {
+    "customer_id": "CUST_06599",
+    "churn_probability": 0.9282,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "45 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "0 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$50.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Low Monthly Logins (0/mo)",
+          "value": 1.7771
+        },
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 1.1748
+        }
+      ],
+      "decreasing": [
+        {
+          "feature": "Long Customer Tenure (45 mos)",
+          "value": 0.2614
+        }
+      ]
+    },
+    "recommended_actions": [
+      "Schedule a 1-on-1 Product Onboarding & Activation session to help the user rebuild regular login habits (currently 0 logins/month).",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10).",
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness."
+    ]
+  },
+  {
+    "customer_id": "CUST_01426",
+    "churn_probability": 0.928,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "42 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "0 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "1 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$50.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Low Monthly Logins (0/mo)",
+          "value": 1.6179
+        },
+        {
+          "feature": "Low CSAT Score (1/10)",
+          "value": 1.1483
+        }
+      ],
+      "decreasing": [
+        {
+          "feature": "Long Customer Tenure (42 mos)",
+          "value": 0.2157
+        }
+      ]
+    },
+    "recommended_actions": [
+      "Schedule a 1-on-1 Product Onboarding & Activation session to help the user rebuild regular login habits (currently 0 logins/month).",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (1.0/10).",
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness."
+    ]
+  },
+  {
+    "customer_id": "CUST_06459",
+    "churn_probability": 0.9058,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "1 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "20 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$10.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Short Customer Tenure (1 mos)",
+          "value": 1.0335
+        },
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 0.8937
+        },
+        {
+          "feature": "Payment Failures (2 failed)",
+          "value": 0.7342
+        }
+      ],
+      "decreasing": []
+    },
+    "recommended_actions": [
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness.",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10).",
+      "Reach out to update payment credentials and offer flexible billing terms to resolve recent payment failures (2 failed attempts)."
+    ]
+  },
+  {
+    "customer_id": "CUST_03070",
+    "churn_probability": 0.9052,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "4 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "13 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "1 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$10.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Short Customer Tenure (4 mos)",
+          "value": 1.2632
+        },
+        {
+          "feature": "Low CSAT Score (1/10)",
+          "value": 0.7484
+        },
+        {
+          "feature": "Days Since Last Login (38.0)",
+          "value": 0.2846
+        }
+      ],
+      "decreasing": []
+    },
+    "recommended_actions": [
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness.",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (1.0/10)."
+    ]
+  },
+  {
+    "customer_id": "CUST_03657",
+    "churn_probability": 0.9043,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "19 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "20 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$10.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 0.9561
+        },
+        {
+          "feature": "Payment Failures (2 failed)",
+          "value": 0.8554
+        },
+        {
+          "feature": "Total Revenue (190.0)",
+          "value": 0.2413
+        }
+      ],
+      "decreasing": []
+    },
+    "recommended_actions": [
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10).",
+      "Reach out to update payment credentials and offer flexible billing terms to resolve recent payment failures (2 failed attempts)."
+    ]
+  },
+  {
+    "customer_id": "CUST_08848",
+    "churn_probability": 0.9016,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "21 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "4 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$20.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Low Monthly Logins (4/mo)",
+          "value": 1.3194
+        },
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 1.2137
+        }
+      ],
+      "decreasing": [
+        {
+          "feature": "Avg Resolution Time (42.97143879639721)",
+          "value": 0.1715
+        }
+      ]
+    },
+    "recommended_actions": [
+      "Schedule a 1-on-1 Product Onboarding & Activation session to help the user rebuild regular login habits (currently 4 logins/month).",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10)."
+    ]
+  },
+  {
+    "customer_id": "CUST_07017",
+    "churn_probability": 0.8985,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "3 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "3 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$50.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 0.8289
+        },
+        {
+          "feature": "Low Monthly Logins (3/mo)",
+          "value": 0.757
+        },
+        {
+          "feature": "Short Customer Tenure (3 mos)",
+          "value": 0.7009
+        }
+      ],
+      "decreasing": []
+    },
+    "recommended_actions": [
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10).",
+      "Schedule a 1-on-1 Product Onboarding & Activation session to help the user rebuild regular login habits (currently 3 logins/month).",
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness."
+    ]
+  },
+  {
+    "customer_id": "CUST_06607",
+    "churn_probability": 0.8949,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "12 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "21 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$20.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 1.4099
+        },
+        {
+          "feature": "Usage Growth Rate (0.31)",
+          "value": 0.3216
+        },
+        {
+          "feature": "Customer Segment Sme (1.0)",
+          "value": 0.1937
+        }
+      ],
+      "decreasing": []
+    },
+    "recommended_actions": [
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10).",
+      "Schedule an urgent Executive Sponsor check-in call to review account health and establish a joint success plan.",
+      "Provide a 30-day priority support SLA and product re-activation training for key user teams."
+    ]
+  },
+  {
+    "customer_id": "CUST_08917",
+    "churn_probability": 0.8897,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "1 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "13 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "5 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$70.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Short Customer Tenure (1 mos)",
+          "value": 1.8248
+        },
+        {
+          "feature": "Days Since Last Login (26.0)",
+          "value": 0.3238
+        }
+      ],
+      "decreasing": [
+        {
+          "feature": "High CSAT Score (5/10)",
+          "value": 0.3645
+        }
+      ]
+    },
+    "recommended_actions": [
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness.",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (5.0/10)."
+    ]
+  },
+  {
+    "customer_id": "CUST_06461",
+    "churn_probability": 0.8881,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "33 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "2 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$50.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Low Monthly Logins (2/mo)",
+          "value": 1.3298
+        },
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 1.1361
+        }
+      ],
+      "decreasing": [
+        {
+          "feature": "Long Customer Tenure (33 mos)",
+          "value": 0.1859
+        }
+      ]
+    },
+    "recommended_actions": [
+      "Schedule a 1-on-1 Product Onboarding & Activation session to help the user rebuild regular login habits (currently 2 logins/month).",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10).",
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness."
+    ]
+  },
+  {
+    "customer_id": "CUST_00535",
+    "churn_probability": 0.8849,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "27 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "0 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "1 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$50.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Low Monthly Logins (0/mo)",
+          "value": 1.5632
+        },
+        {
+          "feature": "Low CSAT Score (1/10)",
+          "value": 1.0973
+        }
+      ],
+      "decreasing": [
+        {
+          "feature": "Usage Growth Rate (-0.29)",
+          "value": 0.1917
+        }
+      ]
+    },
+    "recommended_actions": [
+      "Schedule a 1-on-1 Product Onboarding & Activation session to help the user rebuild regular login habits (currently 0 logins/month).",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (1.0/10)."
+    ]
+  },
+  {
+    "customer_id": "CUST_09110",
+    "churn_probability": 0.8847,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "1 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "14 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "3 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$50.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Short Customer Tenure (1 mos)",
+          "value": 1.9608
+        },
+        {
+          "feature": "Total Revenue (50.0)",
+          "value": 0.2135
+        }
+      ],
+      "decreasing": [
+        {
+          "feature": "Avg Resolution Time (31.971850506494103)",
+          "value": 0.1684
+        }
+      ]
+    },
+    "recommended_actions": [
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness.",
+      "Schedule an urgent Executive Sponsor check-in call to review account health and establish a joint success plan.",
+      "Provide a 30-day priority support SLA and product re-activation training for key user teams."
+    ]
+  },
+  {
+    "customer_id": "CUST_00157",
+    "churn_probability": 0.876,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "2 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "18 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$20.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Short Customer Tenure (2 mos)",
+          "value": 1.2334
+        },
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 1.0299
+        },
+        {
+          "feature": "Avg Session Time (11.991649268065052)",
+          "value": 0.1807
+        }
+      ],
+      "decreasing": []
+    },
+    "recommended_actions": [
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness.",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10)."
+    ]
+  },
+  {
+    "customer_id": "CUST_08962",
+    "churn_probability": 0.876,
+    "risk_level": "High",
+    "metrics": [
+      {
+        "label": "Tenure",
+        "value": "2 months"
+      },
+      {
+        "label": "Monthly Logins",
+        "value": "12 / mo"
+      },
+      {
+        "label": "CSAT Score",
+        "value": "2 / 10"
+      },
+      {
+        "label": "Monthly Fee",
+        "value": "$10.00"
+      }
+    ],
+    "shap": {
+      "increasing": [
+        {
+          "feature": "Short Customer Tenure (2 mos)",
+          "value": 1.3233
+        },
+        {
+          "feature": "Low CSAT Score (2/10)",
+          "value": 0.9525
+        },
+        {
+          "feature": "Total Revenue (20.0)",
+          "value": 0.1809
+        }
+      ],
+      "decreasing": []
+    },
+    "recommended_actions": [
+      "Provide a complimentary 90-day feature expansion trial and dedicated CSM check-in to strengthen early account stickiness.",
+      "Assign a Senior CS lead for a 48-hour Sentiment Recovery Sprint to address root causes behind the low CSAT score (2.0/10)."
+    ]
+  }
+];
+
+const riskMeta = {
+  High:   { key:"high",   color:"var(--high)",   bg:"var(--high-bg)",   soft:"var(--high-soft)",   border:"var(--high-border)" },
+  Medium: { key:"medium", color:"var(--medium)", bg:"var(--medium-bg)", soft:"var(--medium-soft)", border:"var(--medium-border)" },
+  Low:    { key:"low",    color:"var(--low)",    bg:"var(--low-bg)",    soft:"var(--low-soft)",    border:"var(--low-border)" },
+};
+
+let selectedId = null;
+let searchTerm = "";
+let riskFilter = "All";
+let sortMode = "highest";
+
+function pct(n){ return Math.round(n*100) + "%"; }
+
+function getCounts(){
+  const counts = { High:0, Medium:0, Low:0 };
+  customers.forEach(c => counts[c.risk_level]++);
+  return counts;
+}
+
+function renderStats(){
+  const counts = getCounts();
+  const avg = customers.length ? customers.reduce((s,c)=>s+c.churn_probability,0) / customers.length : 0;
+
+  const cards = [
+    { label:"High Risk", value:counts.High, color:"var(--high)" },
+    { label:"Medium Risk", value:counts.Medium, color:"var(--medium)" },
+    { label:"Low Risk", value:counts.Low, color:"var(--low)" },
+    { label:"Average Risk", value:pct(avg), color:"var(--accent)" },
+  ];
+
+  document.getElementById('stats').innerHTML = cards.map(c => `
+    <div class="stat-card">
+      <div class="label"><span>${c.label}</span><span class="dot" style="--dot-color:${c.color}"></span></div>
+      <div class="value">${c.value}</div>
+    </div>
+  `).join('');
+}
+
+function renderDistribution(){
+  const counts = getCounts();
+  const total = customers.length;
+  const rows = [
+    { name:"High", count:counts.High, color:"var(--high)" },
+    { name:"Medium", count:counts.Medium, color:"var(--medium)" },
+    { name:"Low", count:counts.Low, color:"var(--low)" },
+  ];
+
+  const stack = rows.map(r => {
+    const width = total ? (r.count / total * 100) : 0;
+    return `<span class="seg" style="width:${width}%; background:${r.color}"></span>`;
+  }).join('');
+
+  const rowsHtml = rows.map(r => {
+    const width = total ? (r.count / total * 100) : 0;
+    return `
+      <div class="dist-row">
+        <div class="dist-label"><span class="dot" style="background:${r.color}"></span>${r.name}</div>
+        <div class="dist-bar"><i style="width:${width}%; background:${r.color}"></i></div>
+        <div class="dist-count">${r.count}</div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('distribution').innerHTML = `
+    <div class="dist-stack">${stack}</div>
+    <div class="dist-rows">${rowsHtml}</div>
+  `;
+}
+
+function renderInsight(){
+  const counts = getCounts();
+  const calm = counts.High === 0;
+  const el = document.getElementById('insight-banner');
+
+  el.innerHTML = `
+    <div class="insight-card ${calm ? 'calm' : ''}">
+      <div class="insight-icon">
+        ${calm
+          ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>`
+          : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>`
+        }
+      </div>
+      <div class="insight-title">Today's Insight</div>
+      <div class="insight-value">
+        ${calm
+          ? `No customers are currently high risk.`
+          : `${counts.High} customer${counts.High === 1 ? '' : 's'} ${counts.High === 1 ? 'is' : 'are'} currently at high risk.`
+        }
+      </div>
+      <button type="button" class="insight-link" onclick="jumpToHighRisk(${!calm})">
+        ${calm ? 'View customers' : 'View customers'}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+function jumpToHighRisk(filterHigh){
+  if(filterHigh) setFilter('High');
+  document.getElementById('customers-panel').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderFilterChips(){
+  const options = ["All", "High", "Medium", "Low"];
+  document.getElementById('filter-chips').innerHTML = options.map(o => `
+    <button type="button" class="chip ${riskFilter===o ? 'active '+o.toLowerCase() : ''}" onclick="setFilter('${o}')">${o}</button>
+  `).join('');
+}
+
+function setFilter(level){
+  riskFilter = level;
+  renderFilterChips();
+  renderTable();
+}
+
+function getSortedList(){
+  let list = [...customers];
+  if(sortMode === "highest") list.sort((a,b) => b.churn_probability - a.churn_probability);
+  else if(sortMode === "lowest") list.sort((a,b) => a.churn_probability - b.churn_probability);
+  else list.sort((a,b) => a.customer_id.localeCompare(b.customer_id));
+  return list;
+}
+
+function getFiltered(){
+  let list = getSortedList();
+  if(riskFilter !== "All") list = list.filter(c => c.risk_level === riskFilter);
+  if(searchTerm){
+    const q = searchTerm.trim().toLowerCase();
+    list = list.filter(c => c.customer_id.toLowerCase().includes(q));
+  }
+  return list;
+}
+
+function renderTable(){
+  const filtered = getFiltered();
+  document.getElementById('rowcount').textContent = filtered.length + (filtered.length === 1 ? " customer" : " customers");
+
+  if(!filtered.length){
+    document.getElementById('table-body').innerHTML = `
+      <tr class="empty-row"><td colspan="3">
+        <div class="empty-state">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <h3>No customers found</h3>
+          <p>Try a different customer ID or remove the current filter.</p>
+        </div>
+      </td></tr>
+    `;
+    return;
+  }
+
+  document.getElementById('table-body').innerHTML = filtered.map(c => {
+    const meta = riskMeta[c.risk_level];
+    return `
+      <tr data-id="${c.customer_id}" class="${c.customer_id===selectedId ? 'active':''}"
+          tabindex="0" role="button"
+          aria-label="${c.customer_id}, ${c.risk_level} risk, ${pct(c.churn_probability)} likelihood of leaving"
+          onclick="selectCustomer('${c.customer_id}')"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectCustomer('${c.customer_id}')}">
+        <td class="cust-id">${c.customer_id}</td>
+        <td><span class="pill ${meta.key}"><span class="dot"></span>${c.risk_level}</span></td>
+        <td>
+          <div class="prob-cell">
+            <span class="prob-num" style="color:${meta.color}">${pct(c.churn_probability)}</span>
+            <span class="prob-bar"><i style="width:${c.churn_probability*100}%; background:${meta.color}"></i></span>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderDetailEmpty(){
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-empty">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 11H3v10h6V11zM21 3h-6v18h6V3zM15 8H9v13h6V8z"/>
+      </svg>
+      <h3>Select a customer</h3>
+      <p>Choose a customer from the list to view their risk factors and next best actions.</p>
+    </div>
+  `;
+}
+
+function shapRows(items, direction){
+  if (!items || !items.length) return `<div class="shap-none">None identified</div>`;
+  const maxVal = Math.max(...items.map(i => i.value));
+  return items.map(i => {
+    const ratio = maxVal ? i.value / maxVal : 0;
+    return `
+      <div class="shap-row">
+        <div class="shap-feature">${i.feature}</div>
+        <div class="shap-mini-bar"><i style="width:${Math.round(ratio*100)}%; background:${direction==='up' ? 'var(--high)' : 'var(--low)'}"></i></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function leadSentence(c){
+  const inc = c.shap && c.shap.increasing ? c.shap.increasing : [];
+  if(!inc.length){
+    return { text: `No specific concerns stand out right now.`, color: 'var(--low)' };
+  }
+  const top = [...inc].sort((a,b) => b.value - a.value)[0];
+  const meta = riskMeta[c.risk_level];
+  return {
+    text: `Mainly because of <strong>${top.feature.toLowerCase()}</strong>${inc.length > 1 ? `, plus ${inc.length - 1} other factor${inc.length - 1 > 1 ? 's' : ''} below` : ''}.`,
+    color: meta.color
+  };
+}
+
+function selectCustomer(id){
+  selectedId = id;
+  const c = customers.find(x => x.customer_id === id);
+  if(!c) return;
+
+  const meta = riskMeta[c.risk_level];
+  const circumference = 2 * Math.PI * 70;
+  const offset = circumference * (1 - c.churn_probability);
+  const doneIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>`;
+  const lead = leadSentence(c);
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-body">
+      <div class="detail-id-row">
+        <span class="cust-id">${c.customer_id}</span>
+        <span class="pill ${meta.key}"><span class="dot"></span>${c.risk_level} Risk</span>
+      </div>
+
+      <div class="gauge-wrap">
+        <svg width="156" height="156" viewBox="0 0 156 156" style="position:absolute;">
+          <circle cx="78" cy="78" r="70" fill="none" stroke="var(--border)" stroke-width="9"/>
+          <circle cx="78" cy="78" r="70" fill="none" stroke="${meta.color}" stroke-width="9"
+            stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+            transform="rotate(-90 78 78)" style="transition: stroke-dashoffset .6s ease;"/>
+        </svg>
+        <div class="gauge">
+          <div class="gauge-inner">
+            <div class="pct" style="color:${meta.color}">${pct(c.churn_probability)}</div>
+            <div class="pct-label">Likelihood of Leaving</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Snapshot</div>
+      <div class="metrics-grid">
+        ${(c.metrics || []).map(m => `
+          <div class="metric-chip">
+            <div class="m-label">${m.label}</div>
+            <div class="m-value">${m.value}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="section-label">Risk Factors</div>
+      <div class="lead-line" style="--lead-color:${lead.color}"><span class="lead-dot"></span><span>${lead.text}</span></div>
+      <div class="shap-group">
+        <div class="shap-group-label">Increasing Risk</div>
+        ${shapRows(c.shap ? c.shap.increasing : [], 'up')}
+      </div>
+      <div class="shap-group">
+        <div class="shap-group-label">Reducing Risk</div>
+        ${shapRows(c.shap ? c.shap.decreasing : [], 'down')}
+      </div>
+
+      <div class="section-label">Next Best Actions</div>
+      <div class="actions-list">
+        ${(c.recommended_actions || []).map((a,i) => `
+          <div class="action-item ${i===0 ? 'primary' : ''}" tabindex="0" role="button" aria-label="Action ${i+1}: ${a}. Press to mark complete."
+               onclick="this.classList.toggle('done')"
+               onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('done')}">
+            <div class="action-num"><span>${i+1}</span>${doneIcon}</div>
+            <div class="action-text">${a}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  renderTable();
+}
+
+document.getElementById('search-input').addEventListener('input', (e) => {
+  searchTerm = e.target.value;
+  document.getElementById('table-search-input').value = e.target.value;
+  renderTable();
+});
+
+document.getElementById('table-search-input').addEventListener('input', (e) => {
+  searchTerm = e.target.value;
+  document.getElementById('search-input').value = e.target.value;
+  renderTable();
+});
+
+document.getElementById('sort-select').addEventListener('change', (e) => {
+  sortMode = e.target.value;
+  renderTable();
+});
+
+document.getElementById('nav-search-btn').addEventListener('click', () => {
+  document.getElementById('table-search-input').focus();
+  document.getElementById('customers-panel').scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+renderStats();
+renderDistribution();
+renderInsight();
+renderFilterChips();
+renderTable();
+if (customers.length > 0) {
+  selectCustomer(customers[0].customer_id);
+} else {
+  renderDetailEmpty();
+}
+</script>
+
+</body>
+</html>

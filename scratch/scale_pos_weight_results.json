@@ -1,0 +1,38 @@
+[
+  {
+    "variant":"Full Ratio (majority \/ minority)",
+    "weight":8.7919,
+    "tn":1377,
+    "fp":419,
+    "fn":61,
+    "tp":143,
+    "precision":0.2544,
+    "recall":0.701,
+    "f1_score":0.3734,
+    "accuracy":0.76
+  },
+  {
+    "variant":"Half Ratio (0.5 * full_ratio)",
+    "weight":4.396,
+    "tn":1495,
+    "fp":301,
+    "fn":94,
+    "tp":110,
+    "precision":0.2676,
+    "recall":0.5392,
+    "f1_score":0.3577,
+    "accuracy":0.8025
+  },
+  {
+    "variant":"Sqrt Ratio (sqrt(full_ratio))",
+    "weight":2.9651,
+    "tn":1599,
+    "fp":197,
+    "fn":131,
+    "tp":73,
+    "precision":0.2704,
+    "recall":0.3578,
+    "f1_score":0.308,
+    "accuracy":0.836
+  }
+]
