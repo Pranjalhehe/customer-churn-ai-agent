@@ -4,11 +4,11 @@ import json
 
 def build_static_dashboard(
     json_path: str = 'data/processed/dashboard_data.json',
-    template_path: str = 'app/dashboard_v2.html',
+    template_path: str = 'app/dashboard_v3.html',
     output_path: str = 'app/dashboard_final.html'
 ):
     """
-    Reads dashboard JSON data and injects it into app/dashboard_v2.html,
+    Reads dashboard JSON data and injects it into app/dashboard_v3.html,
     saving the resulting standalone HTML file to app/dashboard_final.html.
     """
     # 1. Read JSON data
