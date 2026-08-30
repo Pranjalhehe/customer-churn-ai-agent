@@ -50,6 +50,36 @@ def is_genuine_risk_factor(f: dict) -> bool:
         return False
     return True
 
+import time
+
+GROQ_MODELS_POOL = ["groq/compound-mini", "qwen/qwen3.6-27b", "openai/gpt-oss-20b", "groq/compound"]
+
+def call_groq_with_retry(client, model_name, prompt, max_retries=2):
+    models_to_try = [model_name] + [m for m in GROQ_MODELS_POOL if m != model_name]
+    last_err = None
+    for target_model in models_to_try:
+        for attempt in range(max_retries):
+            try:
+                time.sleep(0.2)
+                print(f"   -> [LLM Request] Model='{target_model}' (Attempt {attempt+1}/{max_retries})...", flush=True)
+                response = client.chat.completions.create(
+                    model=target_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    timeout=12.0
+                )
+                print(f"   [OK] [LLM Response Success]", flush=True)
+                return response
+            except Exception as e:
+                last_err = e
+                err_msg = str(e).lower()
+                print(f"   [WARN] [LLM Attempt Failed] Model='{target_model}' Error: {e}", flush=True)
+                if "rate_limit" in err_msg or "429" in err_msg or "rpd" in err_msg or "tpd" in err_msg or "404" in err_msg:
+                    print(f"   -> Rate limit/quota reached on '{target_model}'. Switching to next model in pool...", flush=True)
+                    break
+                time.sleep(1.0 * (attempt + 1))
+    if last_err:
+        raise last_err
+
 def recommend_actions(
     risk_explanation: str, 
     top_risk_factors: Optional[list] = None, 
@@ -72,27 +102,25 @@ def recommend_actions(
             "Schedule routine 90-day executive alignment check-in to reinforce partnership goals."
         ]
         
-    key = api_key or os.getenv("POLLINATIONS_API_KEY")
+    key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("POLLINATIONS_API_KEY")
     prompt = build_actions_prompt(risk_explanation, genuine_risk_factors)
     
     text = ""
     if not key or key.strip() == "" or key == "your_api_key_here":
-        print("\n⚠️ [AGENT WARNING] POLLINATIONS_API_KEY is not set in .env! Using dynamic factor-based fallback for recommend_actions().", file=sys.stderr)
+        print("\n[WARNING] GROQ_API_KEY is not set in .env! Using dynamic factor-based fallback for recommend_actions().", file=sys.stderr)
     else:
         try:
             client = OpenAI(
                 api_key=key,
-                base_url="https://gen.pollinations.ai/v1"
+                base_url="https://api.groq.com/openai/v1"
             )
-            response = client.chat.completions.create(
-                model="openai",
-                messages=[{"role": "user", "content": prompt}]
-            )
+            model_name = os.getenv("GROQ_MODEL", "groq/compound-mini")
+            response = call_groq_with_retry(client, model_name, prompt)
             raw_text = response.choices[0].message.content
             if raw_text and raw_text.strip():
                 text = raw_text.strip()
         except Exception as e:
-            print(f"\n❌ [AGENT API ERROR] Pollinations API call failed in recommend_actions(): {e}! Using dynamic fallback actions.", file=sys.stderr)
+            print(f"\n[AGENT API ERROR] Groq API call failed in recommend_actions(): {e}! Using dynamic fallback actions.", file=sys.stderr)
 
     if text:
         actions = []

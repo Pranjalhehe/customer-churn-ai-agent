@@ -72,6 +72,15 @@ def build_explanation_prompt(shap_output: dict) -> str:
     ticket_excerpt = shap_output.get("support_ticket_excerpt", "")
     feedback_snippet = shap_output.get("feedback_snippet", "")
     
+    risk_level = shap_output.get("risk_level")
+    if not risk_level:
+        if churn_prob > 0.44:
+            risk_level = "High"
+        elif churn_prob >= 0.20:
+            risk_level = "Medium"
+        else:
+            risk_level = "Low"
+    
     translated_factors = [
         f"#{i+1}: {translate_feature_name(f['feature'], f['value'], f['direction'])} (SHAP Impact: {f['shap_value']:+.4f}, Direction: {f['direction']})"
         for i, f in enumerate(top_factors)
@@ -82,7 +91,7 @@ def build_explanation_prompt(shap_output: dict) -> str:
     
     prompt = f"""You are an AI assistant for a Customer Success Representative.
 A customer churn risk model evaluated a customer and found:
-- Predicted Churn Probability: {churn_prob:.1%}
+- Assigned Risk Level: {risk_level} (Predicted Churn Probability: {churn_prob:.1%})
 - Top Key Risk Factors (ordered strictly by importance/impact):
 {factors_str}
 - Support Ticket Excerpt: "{ticket_excerpt}"
@@ -95,20 +104,65 @@ CRITICAL INSTRUCTIONS:
 2. Reference the customer's specific support ticket excerpt or feedback snippet directly (e.g., "Their recent ticket reported unresolved billing issues..." or "Customer survey feedback noted...").
 3. Do NOT use generic churn template language. Customize the emphasis completely based on the #1 risk factor and customer text above.
 4. Do NOT use data science jargon like "SHAP", "features", "variables", or "model weights".
-5. Tailor the closing recommendation strictly to the customer's risk level:
-   - For High risk (churn prob >= 44%), include an urgent action recommendation (e.g. "Immediate CS outreach is recommended to mitigate churn risk.").
-   - For Medium risk (churn prob 20%-44%), suggest a proactive CSM check-in.
-   - For Low risk (churn prob < 20%), do NOT use urgent language or "immediate outreach" calls to action. Instead, state that the account is in healthy standing with routine monitoring.
+5. Tailor the closing sentence strictly to the customer's assigned Risk Level ({risk_level}):
+   - If Risk Level is High: include an urgent action recommendation (e.g. "Immediate CS outreach is recommended to mitigate churn risk.").
+   - If Risk Level is Medium: suggest a proactive CSM check-in (e.g. "A proactive CSM check-in is recommended to discuss performance and address minor concerns."). Do NOT use urgent phrases like "Immediate CS outreach is recommended".
+   - If Risk Level is Low: do NOT use urgent language or "immediate outreach" calls to action. Instead, state that the account is in healthy standing with routine monitoring.
 6. Write strictly for a Customer Success Representative."""
 
     return prompt
 
+HIGH_RISK_CLOSING_PHRASES = [
+    "Immediate CS outreach is recommended to mitigate churn risk.",
+    "Urgent Customer Success intervention is required to stabilize account health.",
+    "Priority executive alignment and dedicated outreach are strongly advised.",
+    "Prompt CSM engagement should be prioritized before contract renewal."
+]
+
+def get_high_risk_closing(shap_output: dict) -> str:
+    cid = str(shap_output.get("customer_id", ""))
+    top_factors = shap_output.get("top_risk_factors", [])
+    primary_feat = top_factors[0]["feature"] if top_factors else ""
+    seed_str = cid + primary_feat
+    idx = abs(hash(seed_str)) % len(HIGH_RISK_CLOSING_PHRASES)
+    return HIGH_RISK_CLOSING_PHRASES[idx]
+
+import time
+
+GROQ_MODELS_POOL = ["groq/compound-mini", "qwen/qwen3.6-27b", "openai/gpt-oss-20b", "groq/compound"]
+
+def call_groq_with_retry(client, model_name, prompt, max_retries=2):
+    models_to_try = [model_name] + [m for m in GROQ_MODELS_POOL if m != model_name]
+    last_err = None
+    for target_model in models_to_try:
+        for attempt in range(max_retries):
+            try:
+                time.sleep(0.2)
+                print(f"   -> [LLM Request] Model='{target_model}' (Attempt {attempt+1}/{max_retries})...", flush=True)
+                response = client.chat.completions.create(
+                    model=target_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    timeout=12.0
+                )
+                print(f"   [OK] [LLM Response Success]", flush=True)
+                return response
+            except Exception as e:
+                last_err = e
+                err_msg = str(e).lower()
+                print(f"   [WARN] [LLM Attempt Failed] Model='{target_model}' Error: {e}", flush=True)
+                if "rate_limit" in err_msg or "429" in err_msg or "rpd" in err_msg or "tpd" in err_msg or "404" in err_msg:
+                    print(f"   -> Rate limit/quota reached on '{target_model}'. Switching to next model in pool...", flush=True)
+                    break
+                time.sleep(1.0 * (attempt + 1))
+    if last_err:
+        raise last_err
+
 def explain_risk(shap_output: dict, api_key: str = None) -> str:
     """
     Generate a 2-3 sentence, plain-English explanation of customer churn risk
-    tailored for a Customer Success Representative using Pollinations.ai API via OpenAI SDK.
+    tailored for a Customer Success Representative using Groq API via OpenAI SDK.
     """
-    key = api_key or os.getenv("POLLINATIONS_API_KEY")
+    key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("POLLINATIONS_API_KEY")
     churn_prob = shap_output.get("churn_probability", 0.0)
     top_factors = shap_output.get("top_risk_factors", [])
     ticket_excerpt = shap_output.get("support_ticket_excerpt", "")
@@ -117,22 +171,20 @@ def explain_risk(shap_output: dict, api_key: str = None) -> str:
     prompt = build_explanation_prompt(shap_output)
     
     if not key or key.strip() == "" or key == "your_api_key_here":
-        print("\n⚠️ [AGENT WARNING] POLLINATIONS_API_KEY is not set in .env! Falling back to dynamic factor-based explanation.", file=sys.stderr)
+        print("\n[WARNING] GROQ_API_KEY is not set in .env! Falling back to dynamic factor-based explanation.", file=sys.stderr)
     else:
         try:
             client = OpenAI(
                 api_key=key,
-                base_url="https://gen.pollinations.ai/v1"
+                base_url="https://api.groq.com/openai/v1"
             )
-            response = client.chat.completions.create(
-                model="openai",
-                messages=[{"role": "user", "content": prompt}]
-            )
+            model_name = os.getenv("GROQ_MODEL", "groq/compound-mini")
+            response = call_groq_with_retry(client, model_name, prompt)
             text = response.choices[0].message.content
             if text and text.strip():
                 return text.strip()
         except Exception as e:
-            print(f"\n❌ [AGENT API ERROR] Pollinations API call failed: {e}! Falling back to dynamic factor-based explanation.", file=sys.stderr)
+            print(f"\n[AGENT API ERROR] Groq API call failed: {e}! Falling back to dynamic factor-based explanation.", file=sys.stderr)
 
     # Dynamic fallback tailored strictly by risk level
     if top_factors:
@@ -144,7 +196,8 @@ def explain_risk(shap_output: dict, api_key: str = None) -> str:
                 explanation += f" Their latest ticket notes: '{ticket_excerpt}'"
             elif feedback_snippet:
                 explanation += f" Recent feedback highlighted: '{feedback_snippet}'"
-            explanation += " Immediate CS outreach is recommended to mitigate churn risk."
+            closing = get_high_risk_closing(shap_output)
+            explanation += f" {closing}"
         elif churn_prob >= 0.20:
             explanation = f"This customer shows moderate churn risk at {churn_prob:.1%}, influenced by {f1_desc.lower()}."
             if ticket_excerpt:
@@ -163,7 +216,8 @@ def explain_risk(shap_output: dict, api_key: str = None) -> str:
         return explanation
     
     if churn_prob >= 0.44:
-        return f"This customer is at high risk ({churn_prob:.1%}). Immediate CS outreach is recommended."
+        closing = get_high_risk_closing(shap_output)
+        return f"This customer is at high risk ({churn_prob:.1%}). {closing}"
     elif churn_prob >= 0.20:
         return f"This customer is at moderate risk ({churn_prob:.1%}). Proactive CSM check-in recommended."
     else:

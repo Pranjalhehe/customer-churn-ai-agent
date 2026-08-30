@@ -4,6 +4,7 @@ import sys
 # Ensure project root is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import time
 import json
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -261,8 +262,10 @@ def generate_dashboard_data(output_path: str = 'data/processed/dashboard_data.js
     )
     
     v2_profiles = []
-    for profile in raw_profiles:
+    for idx, profile in enumerate(raw_profiles):
         cid = profile.get("customer_id")
+        risk_lvl = profile.get("risk_level")
+        print(f"[{idx+1}/{len(raw_profiles)}] Processing customer '{cid}' (Risk: {risk_lvl})...", flush=True)
         raw_row = None
         if raw_test is not None and cid is not None and 'customer_id' in raw_test.columns:
             matched = raw_test[raw_test['customer_id'] == cid]
@@ -271,6 +274,8 @@ def generate_dashboard_data(output_path: str = 'data/processed/dashboard_data.js
                 
         v2_profile = transform_profile_for_v2(profile, raw_row=raw_row)
         v2_profiles.append(v2_profile)
+        if idx < len(raw_profiles) - 1:
+            time.sleep(0.5)
         
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
